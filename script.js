@@ -1,63 +1,80 @@
-const inputBox = document.querySelector('.input-box');
-const searchBtn = document.getElementById('searchBtn');
-const weather_img = document.querySelector('.weather-img');
-const temperature = document.querySelector('.temperature');
-const description = document.querySelector('.description');
-const humidity = document.getElementById('humidity');
-const wind_speed = document.getElementById('wind-speed');
+let cityName = document.querySelector(".weather_city");
+let w_icon = document.querySelector(".weather_icon");
+let w_maxTem = document.querySelector(".weather_max");
+let dateTime = document.querySelector(".weather_date_time");
+let w_minTem = document.querySelector(".weather_min");
+let w_forecast = document.querySelector(".weather_forecast");
+let w_temperature = document.querySelector(".weather_temperature");
 
-const location_not_found = document.querySelector('.location-not-found');
+let w_feelsLike = document.querySelector(".weather_feelsLike");
+let w_humidity = document.querySelector(".weather_humidity");
+let w_wind = document.querySelector(".weather_wind");
+let w_pressure = document.querySelector(".weather_pressure");
 
-const weather_body = document.querySelector('.weather-body');
+let citySearch = document.querySelector(".weather_search");
 
+const getCountryName = (code) => {
+  return new Intl.DisplayNames([code], { type: "region" }).of(code);
+};
 
-async function checkWeather(city){
-    const api_key = "9378938403f16e1e1d4b9717d7469dbc";
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${api_key}`;
+const getDateTime = (dt) => {
+  const curDate = new Date(dt * 1000);
+  console.log(curDate);
 
-    const weather_data = await fetch(`${url}`).then(response => response.json());
+  const options = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  };
 
+  const formatter = new Intl.DateTimeFormat("en-US", options);
+  console.log(formatter);
+  return formatter.format(curDate);
+};
 
-    if(weather_data.cod === `404`){
-        location_not_found.style.display = "flex";
-        weather_body.style.display = "none";
-        console.log("error");
-        return;
-    }
+let city = "pune";
 
-    console.log("run");
-    location_not_found.style.display = "none";
-    weather_body.style.display = "flex";
-    temperature.innerHTML = `${Math.round(weather_data.main.temp - 273.15)}°C`;
-    description.innerHTML = `${weather_data.weather[0].description}`;
+citySearch.addEventListener("submit", (e) => {
+  e.preventDefault();
 
-    humidity.innerHTML = `${weather_data.main.humidity}%`;
-    wind_speed.innerHTML = `${weather_data.wind.speed}Km/H`;
+  let cityName = document.querySelector(".city_name");
+  console.log(cityName.value);
+  city = cityName.value;
 
+  getWeatherData();
 
-    switch(weather_data.weather[0].main){
-        case 'Clouds':
-            weather_img.src = "/assets/cloud.png";
-            break;
-        case 'Clear':
-            weather_img.src = "/assets/clear.png";
-            break;
-        case 'Rain':
-            weather_img.src = "/assets/rain.png";
-            break;
-        case 'Mist':
-            weather_img.src = "/assets/mist.png";
-            break;
-        case 'Snow':
-            weather_img.src = "/assets/snow.png";
-            break;
-
-    }
-
-    console.log(weather_data);
-}
-
-
-searchBtn.addEventListener('click', ()=>{
-    checkWeather(inputBox.value);
+  cityName.value = "";
 });
+
+const getWeatherData = async () => {
+  const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&APPID=addYourOwnAPIKey`;
+  try {
+    const res = await fetch(weatherUrl);
+    const data = await res.json();
+    console.log(data);
+
+    const { main, name, weather, wind, sys, dt } = data;
+
+    cityName.innerHTML = `${name}, ${getCountryName(sys.country)}`;
+    dateTime.innerHTML = getDateTime(dt);
+
+    w_forecast.innerHTML = weather[0].main;
+    w_icon.innerHTML = `<img src="http://openweathermap.org/img/wn/${weather[0].icon}@4x.png" />`;
+
+    w_temperature.innerHTML = `${main.temp}&#176`;
+    w_minTem.innerHTML = `Min: ${main.temp_min.toFixed()}&#176`;
+    w_maxTem.innerHTML = `Min: ${main.temp_max.toFixed()}&#176`;
+
+    w_feelsLike.innerHTML = `${main.feels_like.toFixed(2)}&#176`;
+    w_humidity.innerHTML = `${main.humidity}%`;
+    w_wind.innerHTML = `${wind.speed} m/s`;
+    w_pressure.innerHTML = `${main.pressure} hPa`;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+document.body.addEventListener("load", getWeatherData());
